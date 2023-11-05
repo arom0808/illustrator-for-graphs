@@ -23,11 +23,13 @@ protected:
 private slots:
     void on_horizontalSlider_valueChanged(int value);
 
+    void on_checkBox_stateChanged(int arg1);
+
 private:
     void draw();
     Ui::MainWindow *ui;
     QGraphicsScene *scene;
     GraphPainter* graph_painter;
 
-    static constexpr qreal min_scale = 0.1, max_scale = 10, base_pixels_scale = 10;
+    static constexpr qreal min_scale = 0.1, base_pixels_scale = 10, min_pix_scale = min_scale * base_pixels_scale;
 };

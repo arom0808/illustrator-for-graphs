@@ -2,60 +2,75 @@
 
 #include <QObject>
 #include <QPointF>
-#include <functional>
-#include <algorithm>
+#include <cmath>
+#include <tuple>
+
+using std::min;
+using std::max;
+using std::tie;
+using std::make_tuple;
 
 class PixelChecker
 {
 public:
+    PixelChecker();
     bool check(qreal x, qreal y) const;
 private:
     struct Circle {
-    public:
         qreal x0, y0, r;
+    public:
         Circle(qreal x0, qreal y0, qreal r) : x0(x0), y0(y0), r(r) {}
-        bool in(qreal x, qreal y) { return (x - x0) * (x - x0) + (y - y0) * (y - y0) <= r * r; }
-        bool out(qreal x, qreal y) { return (x - x0) * (x - x0) + (y - y0) * (y - y0) >= r * r; }
+        inline bool in(qreal x, qreal y) const { return square_dist_from_center(x, y) <= r * r; }
+        inline bool out(qreal x, qreal y) const { return square_dist_from_center(x, y) >= r * r; }
+        inline square_dist_from_center(qreal x, qreal y) const { return (x - x0) * (x - x0) + (y - y0) * (y - y0); }
     };
     struct Parabola {
-    private:
-        QPointF _point(){
-            qreal x0 = -b / (2 * a);
-            return QPointF(x0, a * x0 * x0 + b * x0 + c);
-        }
-    public:
         qreal a, b, c;
-        QPointF point;
-        Parabola(qreal a, qreal b, qreal c) : a(a), b(b), c(c), point(_point()) {}
-        Parabola(qreal x1, qreal y1, qreal x2, qreal y2, qreal x3, qreal y3) {
-            a = ((y3 - y1) / (x3 - x1) - (y2 - y1) / (x2 - x1)) / ((x3 * x3 - x1 * x1) / (x3 - x1) - (x2 * x2 - x1 * x1) / (x2 - x1));
-            b = (y2 - y1 + x1 * x1 * a - x2 * x2 * a) / (x2 - x1);
-            c = y1 - x1 * x1 * a - x1 * b;
-            point = _point();
-        }
-        bool vert_over(qreal x, qreal y) { return y >= a * x * x + b * x + c; }
-        bool vert_under(qreal x, qreal y) { return y <= a * x * x + b * x + c; }
-        bool hor_right(qreal x, qreal y) { return x >= a * y * y + b * y + c; }
-        bool hor_left(qreal x, qreal y) { return x <= a * y * y + b * y + c; }
+    public:
+        Parabola(qreal a, qreal b, qreal c) : a(a), b(b), c(c) {}
+        Parabola(qreal x1, qreal y1, qreal x2, qreal y2, qreal x3, qreal y3);
+        QPointF point() const;
+        inline bool vert_over(qreal x, qreal y) const { return y >= value(x); }
+        inline bool vert_under(qreal x, qreal y) const { return y <= value(x); }
+        inline bool hor_right(qreal x, qreal y) const { return x >= value(y); }
+        inline bool hor_left(qreal x, qreal y) const { return x <= value(y); }
+        inline qreal value(qreal x) const { return a * x * x + b * x + c; }
     };
     struct VerticalLine {
-    public:
         qreal x0;
-        VerticalLine(qreal x0) : x0(x0) {}
-        bool left(qreal x, qreal y) { return x <= x0; }
-        bool right(qreal x, qreal y) { return x >= x0; }
-    };
-
-    struct Line {
     public:
-        qreal k, b;
-        Line(qreal k, qreal b) : k(k), b(b) {}
-        Line(qreal x1, qreal y1, qreal x2, qreal y2) {
-            k = (y2 - y1) / (x2 - x1);
-            b = y1 - k * x1;
-        }
-        bool over(qreal x, qreal y) { return y >= k * x + b; }
-        bool under(qreal x, qreal y) { return y <= k * x + b; }
+        VerticalLine(qreal x0) : x0(x0) {}
+        inline bool left(qreal x, qreal y) const { return x <= x0; }
+        inline bool right(qreal x, qreal y) const { return x >= x0; }
     };
+    struct Line {
+        qreal k, b;
+    public:
+        Line(qreal k, qreal b) : k(k), b(b) {}
+        Line(qreal x1, qreal y1, qreal x2, qreal y2);
+        inline bool over(qreal x, qreal y) const { return y >= k * x + b; }
+        inline bool under(qreal x, qreal y) const { return y <= k * x + b; }
+    };
+    struct AxesParallelRect{
+        qreal x1, y1, x2, y2;
+    public:
+        AxesParallelRect(qreal x1, qreal y1, qreal x2, qreal y2) : x1(min(x1, x2)), y1(min(y1, y2)), x2(max(x1, x2)), y2(max(y1, y2)) {}
+        inline bool in(qreal x, qreal y) const { return x >= x1 && x <= x2 && y >= y1 && y <= y2; }
+        inline bool out(qreal x, qreal y) const { return x <= x1 || x >= x2 || y <= y1 || y >= y2; }
+    };
+    struct AxesParallelRhomb{
+        qreal x0, y0, a, b, r;
+    public:
+        AxesParallelRhomb(qreal x1, qreal y1, qreal x2, qreal y2, qreal x3, qreal y3);
+        inline bool in(qreal x, qreal y) const { return value(x, y) <= r; }
+        inline bool out(qreal x, qreal y) const { return value(x, y) >= r; }
+        inline qreal value(qreal x, qreal y) const { return a * std::abs(x - x0) + b * std::abs(y - y0); }
+    };
+    Parabola vert_parabola, hor_parabola;
+    Line hor_line, vert_line, hor_par_line, coord_hor_line;
+    Circle circle;
+    VerticalLine vert_par_line, coord_vert_line;
+    AxesParallelRect rect;
+    AxesParallelRhomb rhomb;
 };
 
