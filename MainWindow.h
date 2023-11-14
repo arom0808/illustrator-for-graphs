@@ -29,7 +29,7 @@ private:
     void draw();
     Ui::MainWindow *ui;
     QGraphicsScene *scene;
-    GraphPainter* graph_painter;
+    GraphPainter *graph_painter;
 
     static constexpr qreal min_scale = 0.1, base_pixels_scale = 10, min_pix_scale = min_scale * base_pixels_scale;
 };

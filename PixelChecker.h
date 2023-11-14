@@ -22,7 +22,7 @@ private:
         Circle(qreal x0, qreal y0, qreal r) : x0(x0), y0(y0), r(r) {}
         inline bool in(qreal x, qreal y) const { return square_dist_from_center(x, y) <= r * r; }
         inline bool out(qreal x, qreal y) const { return square_dist_from_center(x, y) >= r * r; }
-        inline square_dist_from_center(qreal x, qreal y) const { return (x - x0) * (x - x0) + (y - y0) * (y - y0); }
+        inline qreal square_dist_from_center(qreal x, qreal y) const { return (x - x0) * (x - x0) + (y - y0) * (y - y0); }
     };
     struct Parabola {
         qreal a, b, c;

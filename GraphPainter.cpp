@@ -14,8 +14,8 @@ void GraphPainter::draw(QSize size, uint32_t input_scale, bool axes)
         }
     }
     if (axes) {
-        int32_t min_x = -qreal(size.width() / 2) / scale - 0.5, max_x = qreal(size.width() / 2) / scale + 0.5,
-            min_y = -qreal(size.height() / 2) / scale - 0.5, max_y = qreal(size.height() / 2) / scale + 0.5;
+        int32_t min_x = -qreal(size.width() / 2) / scale, max_x = qreal(size.width() / 2) / scale,
+            min_y = -qreal(size.height() / 2) / scale, max_y = qreal(size.height() / 2) / scale;
         int32_t len = max<int32_t>(scale / 5, 1);
         bool cond = false;
         for (int32_t x = min_x, pix_x = x * scale + size.width() / 2; x <= max_x; ++x, pix_x = x * scale + size.width() / 2) {
